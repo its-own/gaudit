@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	slog.Default().Info("hookiee in action")
+	slog.Default().Info("gaudit in action")
 }
 
 func New() *hooks.DefaultHooks {
