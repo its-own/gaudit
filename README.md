@@ -1,10 +1,13 @@
+<p align="center">
+    <img src="https://i.ibb.co/51kV1B7/Screenshot-2024-10-05-at-5-56-53-AM.png" alt="Screenshot-2024-10-05-at-5-56-53-AM"/>
+</p>
+
 # Gaudit 🌟
 
 Welcome to **Gaudit**, an elegant and powerful auditing package for Go applications! With Gaudit, you can effortlessly track changes, log activities, and maintain a detailed audit trail of your data.
 
-<p align="center">
-    <img src="https://i.ibb.co/51kV1B7/Screenshot-2024-10-05-at-5-56-53-AM.png" alt="Screenshot-2024-10-05-at-5-56-53-AM"/>
-</p>
+<p align="center"><a href="#" 
+target="_blank"><img src="https://img.shields.io/badge/Go-1.23+-00ADD8?style=for-the-badge&logo=go" alt="go version" /></a>&nbsp;<a href="#" target="_blank"></a></p>
 
 ## 📦 Features
 
