@@ -2,6 +2,6 @@ package audit
 
 import "testing"
 
-func TestDemo(t *testing.T) {
+func Test_getGoModuleName(t *testing.T) {
 
 }
