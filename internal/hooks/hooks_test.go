@@ -1,7 +1,10 @@
 package hooks
 
 import (
+	"context"
+	audit "github.com/its-own/gaudit/internal/audit_log"
 	"github.com/its-own/gaudit/internal/entities"
+	in "github.com/its-own/gaudit/pkg"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
@@ -17,6 +20,128 @@ type TestStruct struct {
 	Address  string             `bson:"address,omitempty"`
 	EmptyVal string             `bson:"empty_val,omitempty"`
 	Unmapped string
+}
+
+// TestStruct with PreSave and PostSave methods
+type TestHookStruct struct{}
+
+func (t *TestHookStruct) PreSave()  {}
+func (t *TestHookStruct) PostSave() {}
+
+// TestStructWithoutHooks without PreSave and PostSave methods
+type TestStructWithoutHooks struct{}
+
+// Mock models for testing
+type TestModelWithAudit struct {
+	in.Inject
+}
+type TestModelWithoutAudit struct{}
+type NonStructModel int
+
+func TestGetContextValue(t *testing.T) {
+	// Define the key to be used in context
+	const key = "testKey"
+
+	// Create test cases
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		expected string
+	}{
+		{
+			name:     "Key exists with non-empty value",
+			ctx:      context.WithValue(context.Background(), key, "value"),
+			expected: "value",
+		},
+		{
+			name:     "Key exists with empty value",
+			ctx:      context.WithValue(context.Background(), key, ""),
+			expected: "default",
+		},
+		{
+			name:     "Key does not exist",
+			ctx:      context.Background(),
+			expected: "default",
+		},
+		{
+			name:     "Key exists with non-string value",
+			ctx:      context.WithValue(context.Background(), key, 123), // using int instead of string
+			expected: "default",
+		},
+	}
+
+	// Iterate through the test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getContextValue(tt.ctx, key)
+			if result != tt.expected {
+				t.Errorf("expected %s, got %s", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestIsAuditLogEnabled(t *testing.T) {
+	tests := []struct {
+		name     string
+		model    interface{}
+		expected bool
+	}{
+		{"TestModelWithAudit", &TestModelWithAudit{}, true},
+		{"TestModelWithoutAudit", &TestModelWithoutAudit{}, false},
+		{"NonStructModel", NonStructModel(1), false}, // Non-struct input
+		{"EmptyStruct", struct{}{}, false},           // Empty struct
+	}
+	audit.LogModels["github.com/its-own/gaudit/internal/hooksTestModelWithAudit"] = true
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isAuditLogEnabled(tt.model)
+			if result != tt.expected {
+				t.Errorf("expected %v, got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
+func Test_hasPreSaveHook(t *testing.T) {
+	tests := []struct {
+		name    string
+		model   interface{}
+		hasHook bool
+	}{
+		{"With PreSave", &TestHookStruct{}, true},
+		{"Without PreSave", &TestStructWithoutHooks{}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := hasPreSaveHook(tt.model)
+			if got != tt.hasHook {
+				t.Errorf("hasPreSaveHook() = %v, want %v", got, tt.hasHook)
+			}
+		})
+	}
+}
+
+func Test_hasPostSaveHook(t *testing.T) {
+	tests := []struct {
+		name    string
+		model   interface{}
+		hasHook bool
+	}{
+		{"With PostSave", &TestHookStruct{}, true},
+		{"Without PostSave", &TestStructWithoutHooks{}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := hasPostSaveHook(tt.model)
+			if got != tt.hasHook {
+				t.Errorf("hasPostSaveHook() = %v, want %v", got, tt.hasHook)
+			}
+		})
+	}
 }
 
 func TestStructToMap(t *testing.T) {
