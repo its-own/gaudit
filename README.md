@@ -1,7 +1,8 @@
 <p align="center">
     <img src="https://i.postimg.cc/7LK8JWKp/Screenshot-2024-10-07-at-3-27-41-AM.png" height="70%" width="70%" alt="logo">
 </p>
-# Gaudit 🌟
+
+## 🏆 Gaudit 
 
 Welcome to **Gaudit**, an elegant and powerful auditing package for Go applications! With Gaudit, you can effortlessly track changes, log activities, and maintain a detailed audit trail of your data.
 
