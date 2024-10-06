@@ -17,11 +17,11 @@ import (
 
 // WatchAndInjectHooks finds structs with hookie.Inject and calls their hooks
 func WatchAndInjectHooks(ctx context.Context, rootDir string) error {
-	goDirs, err := collectGoDirs("./")
+	goDirs, err := collectGoDirs(rootDir)
 	if err != nil {
 		log.Fatalf("Error collecting Go directories: %v", err)
 	}
-	moduleName, err := getGoModuleName("./")
+	moduleName, err := getGoModuleName(rootDir)
 	if err != nil {
 		log.Fatalf("Error getting Go module name: %v", err)
 	}
@@ -166,7 +166,6 @@ func isExclude(dir string) bool {
 
 func getGoModuleName(dir string) (string, error) {
 	goModPath := filepath.Join(dir, "go.mod")
-
 	data, err := os.ReadFile(goModPath)
 	if err != nil {
 		return "", fmt.Errorf("could not read go.mod file: %v", err)
