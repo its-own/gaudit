@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log/slog"
 	"reflect"
-	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -219,8 +218,10 @@ func structToMap(obj interface{}) (map[string]interface{}, error) {
 		bsonTag := field.Tag.Get("bson")
 
 		// Check if the field should be omitted
-		if isOmitEmpty(value) {
-			continue // Skip adding this field if it's empty
+		if strings.Contains(bsonTag, "omitempty") {
+			if isOmitEmpty(value) {
+				continue // Skip adding this field if it's empty and has "omitempty"
+			}
 		}
 
 		// Use JSON tag as the key if present; otherwise, fallback to BSON tag
@@ -261,19 +262,21 @@ func isOmitEmpty(value reflect.Value) bool {
 
 func convertToSnakeCase(str string) string {
 	var snakeCase string
-	// Handle the acronym cases like 'ID' and 'URL' if needed
-	acronymRegex := regexp.MustCompile(`([A-Z]+)([A-Z][a-z])`)
-	str = acronymRegex.ReplaceAllString(str, "${1}_${2}")
+	runes := []rune(str)
+	length := len(runes)
 
-	// Convert the remaining camel case
-	for i, v := range str {
-		if unicode.IsUpper(v) {
-			if i > 0 {
+	for i := 0; i < length; i++ {
+		// Check if the current character is an uppercase letter
+		if unicode.IsUpper(runes[i]) {
+			// Add underscore before the uppercase letter unless it's the first character or the previous character is already an underscore
+			if i > 0 && runes[i-1] != '_' && (unicode.IsLower(runes[i-1]) || (i+1 < length && unicode.IsLower(runes[i+1]))) {
 				snakeCase += "_"
 			}
-			snakeCase += string(unicode.ToLower(v))
+			// Convert the uppercase letter to lowercase
+			snakeCase += string(unicode.ToLower(runes[i]))
 		} else {
-			snakeCase += string(v)
+			// Just append the lowercase letters and underscores
+			snakeCase += string(runes[i])
 		}
 	}
 	return snakeCase
@@ -282,6 +285,7 @@ func convertToSnakeCase(str string) string {
 func compareDocumentStates(oldDoc, newDoc map[string]interface{}) map[string]entities.AuditChange {
 	changes := make(map[string]entities.AuditChange)
 
+	// Check for keys that are in newDoc (added/modified keys)
 	for key, newVal := range newDoc {
 		if key == "_id" {
 			continue
@@ -291,6 +295,19 @@ func compareDocumentStates(oldDoc, newDoc map[string]interface{}) map[string]ent
 			changes[key] = entities.AuditChange{
 				Old: fmt.Sprintf("%v", oldVal),
 				New: fmt.Sprintf("%v", newVal),
+			}
+		}
+	}
+
+	// Check for keys that are in oldDoc but not in newDoc (deleted keys)
+	for key, oldVal := range oldDoc {
+		if key == "_id" {
+			continue
+		}
+		if _, exists := newDoc[key]; !exists {
+			changes[key] = entities.AuditChange{
+				Old: fmt.Sprintf("%v", oldVal),
+				New: "", // Key was deleted, so no new value
 			}
 		}
 	}

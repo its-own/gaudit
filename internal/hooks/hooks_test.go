@@ -3,8 +3,67 @@ package hooks
 import (
 	"github.com/its-own/gaudit/internal/entities"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"reflect"
 	"testing"
 )
+
+// Sample struct for testing
+type TestStruct struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	Name     string             `json:"name"`
+	Age      int                `json:"age,omitempty" bson:"age,omitempty"`
+	IsActive bool               `bson:"is_active"`
+	Address  string             `bson:"address,omitempty"`
+	EmptyVal string             `bson:"empty_val,omitempty"`
+	Unmapped string
+}
+
+func TestStructToMap(t *testing.T) {
+	// Create test object
+	obj := TestStruct{
+		ID:       primitive.NewObjectID(),
+		Name:     "John Doe",
+		Age:      0, // should be omitted due to "omitempty"
+		IsActive: true,
+		Address:  "123 Main St",
+		EmptyVal: "",
+		Unmapped: "UnmappedField",
+	}
+
+	// Call structToMap to convert to a map
+	result, err := structToMap(obj)
+	if err != nil {
+		t.Fatalf("Error converting struct to map: %v", err)
+	}
+
+	// Expected map output
+	expected := map[string]interface{}{
+		"_id":       obj.ID.Hex(),
+		"name":      "John Doe",
+		"is_active": true,
+		"address":   "123 Main St",
+		"unmapped":  "UnmappedField",
+	}
+
+	// Check that all expected keys exist in the result
+	for key, expectedValue := range expected {
+		value, exists := result[key]
+		if !exists {
+			t.Errorf("Key %s not found in result map", key)
+		} else if value != expectedValue {
+			t.Errorf("Value for key %s mismatch. Expected %v, got %v", key, expectedValue, value)
+		}
+	}
+
+	// Ensure omitted fields are not present
+	omittedKeys := []string{"age", "empty_val"}
+	for _, key := range omittedKeys {
+		if _, exists := result[key]; exists {
+			t.Errorf("Key %s should be omitted but was found in result", key)
+		}
+	}
+}
 
 func Test_compareDocumentStates(t *testing.T) {
 	tests := []struct {
@@ -64,7 +123,7 @@ func Test_compareDocumentStates(t *testing.T) {
 				"name": "test",
 			},
 			expectedDiff: map[string]entities.AuditChange{
-				"email": {Old: "test@example.com", New: "<nil>"},
+				"email": {Old: "test@example.com", New: ""},
 			},
 		},
 		{
@@ -86,5 +145,118 @@ func Test_compareDocumentStates(t *testing.T) {
 			diff := compareDocumentStates(tt.oldDoc, tt.newDoc)
 			assert.Equal(t, tt.expectedDiff, diff)
 		})
+	}
+}
+
+func Test_convertToSnakeCase(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		// Test cases for regular camel case
+		{"camelCase", "camel_case"},
+		{"PascalCase", "pascal_case"},
+		{"snake_case", "snake_case"},
+
+		// Test cases for acronyms
+		{"userID", "user_id"},
+		{"HTTPServer", "http_server"},
+		{"MyURL", "my_url"},
+
+		// Test cases for mixed acronyms and camel case
+		{"getUserID", "get_user_id"},
+		{"getHTTPResponse", "get_http_response"},
+
+		// Edge cases
+		{"", ""},
+		{"single", "single"},
+		{"Already_Snake_Case", "already_snake_case"}, // Shouldn't change
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := convertToSnakeCase(tt.input)
+			if result != tt.expected {
+				t.Errorf("expected %s, but got %s", tt.expected, result)
+			}
+		})
+	}
+}
+
+func Test_isOmitEmpty(t *testing.T) {
+	// Pointer types
+	var ptr *int
+	if !isOmitEmpty(reflect.ValueOf(ptr)) {
+		t.Errorf("Expected true for nil pointer")
+	}
+
+	ptr = new(int)
+	if isOmitEmpty(reflect.ValueOf(ptr)) {
+		t.Errorf("Expected false for non-nil pointer")
+	}
+
+	// Slice types
+	var slice []int
+	if !isOmitEmpty(reflect.ValueOf(slice)) {
+		t.Errorf("Expected true for nil slice")
+	}
+
+	slice = []int{}
+	if !isOmitEmpty(reflect.ValueOf(slice)) {
+		t.Errorf("Expected true for empty slice")
+	}
+
+	slice = []int{1, 2, 3}
+	if isOmitEmpty(reflect.ValueOf(slice)) {
+		t.Errorf("Expected false for non-empty slice")
+	}
+
+	// Array types
+	var array [0]int
+	if !isOmitEmpty(reflect.ValueOf(array)) {
+		t.Errorf("Expected true for empty array")
+	}
+
+	var newArray = [3]int{1, 2, 3}
+	if isOmitEmpty(reflect.ValueOf(newArray)) {
+		t.Errorf("Expected false for non-empty array")
+	}
+
+	// Map types
+	var m map[string]int
+	if !isOmitEmpty(reflect.ValueOf(m)) {
+		t.Errorf("Expected true for nil map")
+	}
+
+	m = make(map[string]int)
+	if !isOmitEmpty(reflect.ValueOf(m)) {
+		t.Errorf("Expected true for empty map")
+	}
+
+	m["key"] = 1
+	if isOmitEmpty(reflect.ValueOf(m)) {
+		t.Errorf("Expected false for non-empty map")
+	}
+
+	// Integer types (default type case)
+	var i int
+	if !isOmitEmpty(reflect.ValueOf(i)) {
+		t.Errorf("Expected true for zero integer")
+	}
+
+	i = 10
+	if isOmitEmpty(reflect.ValueOf(i)) {
+		t.Errorf("Expected false for non-zero integer")
+	}
+
+	// String types (default type case)
+	var s string
+	if !isOmitEmpty(reflect.ValueOf(s)) {
+		t.Errorf("Expected true for empty string")
+	}
+
+	s = "hello"
+	if isOmitEmpty(reflect.ValueOf(s)) {
+		t.Errorf("Expected false for non-empty string")
 	}
 }

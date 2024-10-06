@@ -6,7 +6,7 @@ import "context"
 var LogModels = make(map[string]bool)
 
 func init() {
-	err := WatchAndInjectHooks(context.Background(), "./")
+	err := WatchAndInjectHooks(context.Background())
 	if err != nil {
 		panic(err)
 	}

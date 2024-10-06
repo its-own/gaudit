@@ -16,7 +16,11 @@ import (
 )
 
 // WatchAndInjectHooks finds structs with hookie.Inject and calls their hooks
-func WatchAndInjectHooks(ctx context.Context, rootDir string) error {
+func WatchAndInjectHooks(ctx context.Context) error {
+	rootDir, err := findProjectRoot()
+	if err != nil {
+		return err
+	}
 	goDirs, err := collectGoDirs(rootDir)
 	if err != nil {
 		log.Fatalf("Error collecting Go directories: %v", err)
@@ -175,4 +179,28 @@ func getGoModuleName(dir string) (string, error) {
 		return "", fmt.Errorf("could not parse go.mod file: %v", err)
 	}
 	return modFile.Module.Mod.Path, nil
+}
+
+func findProjectRoot() (string, error) {
+	// Start from the current working directory
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		goModPath := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			return dir, nil // Found go.mod, return directory
+		}
+
+		// Move up one directory level
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break // Reached the root of the filesystem
+		}
+		dir = parent
+	}
+
+	return "", fmt.Errorf("go.mod file not found")
 }
