@@ -38,6 +38,35 @@ type TestModelWithAudit struct {
 type TestModelWithoutAudit struct{}
 type NonStructModel int
 
+// TestStructWithPreSave is a struct that has a PreSave method.
+type TestStructWithPreSave struct{}
+
+func (t *TestStructWithPreSave) PreSave() {}
+
+// TestStructWithoutPreSave is a struct that does not have a PreSave method.
+type TestStructWithoutPreSave struct{}
+
+// TestHasPreSaveHook tests the hasPreSaveHook function.
+func TestHasPreSaveHook(t *testing.T) {
+	tests := []struct {
+		model     interface{}
+		expectHas bool
+	}{
+		{&TestStructWithPreSave{}, true},     // Should return true
+		{&TestStructWithoutPreSave{}, false}, // Should return false
+		{struct{}{}, false},                  // Anonymous struct without PreSave
+	}
+
+	for _, tt := range tests {
+		t.Run("", func(t *testing.T) {
+			result := hasPreSaveHook(tt.model)
+			if result != tt.expectHas {
+				t.Errorf("expected %v, got %v", tt.expectHas, result)
+			}
+		})
+	}
+}
+
 func TestGetContextValue(t *testing.T) {
 	// Define the key to be used in context
 	const key = "testKey"

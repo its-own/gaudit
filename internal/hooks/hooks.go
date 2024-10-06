@@ -64,7 +64,7 @@ func (h *DefaultHooks) handleInsertOperation(ctx context.Context, model interfac
 		DocumentCurrentState: state,
 	}
 
-	_, err = db.Database.Collection("audit_logs_meta").InsertOne(context.Background(), auditLogMeta)
+	_, err = db.Database.Collection("audit_logs_meta").InsertOne(ctx, auditLogMeta)
 	if err != nil {
 		db.Logger.Error(err.Error())
 	}
