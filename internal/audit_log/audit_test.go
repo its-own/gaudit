@@ -2,6 +2,6 @@ package audit
 
 import "testing"
 
-func TestDish(t *testing.T) {
+func TestRegisterModel(t *testing.T) {
 
 }
