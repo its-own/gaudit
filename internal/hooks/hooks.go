@@ -194,6 +194,36 @@ func hasPostSaveHook(model interface{}) bool {
 	return ok
 }
 
+// structToMap converts a struct into a map[string]interface{} where the structs
+// field names or associated tags (bson/json) become the keys, and the field values
+// become the corresponding map values. It also handles nested pointers and reflects
+// on the object's structure to ensure it is a struct before processing.
+//
+// Parameters:
+// - obj: An interface{}, expected to be a struct or a pointer to a struct.
+//
+// Returns:
+//   - map[string]interface{}: A map where the keys are the struct field names (or their
+//     bson/json tags) and values are the corresponding struct field values.
+//   - error: If the input is not a struct or a pointer to a struct, an error is returned.
+//
+// The function performs the following steps:
+// 1. Initializes an empty result map to hold the struct field-to-value mapping.
+// 2. Checks if the input is a pointer. If it is, the pointer is dereferenced to access the actual struct.
+// 3. Ensures the input is a struct after dereferencing (or directly). If not, an error is returned.
+// 4. Iterates over each field in the struct using reflection, retrieves field metadata and value.
+// 5. Calls `convertFieldToMapEntry` to handle individual field processing and insertion into the map.
+//
+// Example usage:
+//
+//	type User struct {
+//	    ID   string `json:"id"`
+//	    Name string `json:"name"`
+//	}
+//
+// user := User{ID: "123", Name: "John"}
+// result, err := structToMap(user)
+// If no error, result will be: map["id": "123", "name": "John"]
 func structToMap(obj interface{}) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 	v := reflect.ValueOf(obj)
@@ -271,6 +301,10 @@ func isOmitEmpty(value reflect.Value) bool {
 	}
 }
 
+// convertToSnakeCase converts a CamelCase or PascalCase string to snake_case.
+// It adds underscores before uppercase letters (except the first letter)
+// and converts them to lowercase.
+// Example: "FirstName" becomes "first_name".
 func convertToSnakeCase(str string) string {
 	var snakeCase string
 	runes := []rune(str)
@@ -293,6 +327,11 @@ func convertToSnakeCase(str string) string {
 	return snakeCase
 }
 
+// compareDocumentStates compares old and new document states and returns a map of changes.
+// Each change contains the old and new values for fields that were added, modified, or deleted.
+//
+// - Fields with differences between oldDoc and newDoc are recorded as changes.
+// - The _id field is ignored as it is considered immutable.
 func compareDocumentStates(oldDoc, newDoc map[string]interface{}) map[string]entities.AuditChange {
 	changes := make(map[string]entities.AuditChange)
 

@@ -39,6 +39,7 @@ import (
 
 func main() {
     // write your own code
+	
 }
 ```
 
@@ -79,7 +80,7 @@ We welcome contributions! If you'd like to contribute to Gaudit, please fork the
 
 ## 📧 Contact
 
-For any questions, suggestions, or feedback, feel free to reach out via [Issues](https://github.com/its-own/gaudit/issues) or contact us directly at [razibulhasan.mithu.com](mailto:razibulhasan.mithu.com).
+For any questions, suggestions, or feedback, feel free to reach out via [Issues](https://github.com/its-own/gaudit/issues) or contact us directly at [razibulhasan.mithu@gmail.com](mailto:razibulhasan.mithu.com).
 
 ## 🤝 License
 
