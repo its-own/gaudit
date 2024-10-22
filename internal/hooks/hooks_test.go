@@ -2,9 +2,9 @@ package hooks
 
 import (
 	"context"
+	in "github.com/its-own/gaudit/in"
 	audit "github.com/its-own/gaudit/internal/audit_log"
 	"github.com/its-own/gaudit/internal/entities"
-	in "github.com/its-own/gaudit/pkg"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"

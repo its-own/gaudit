@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/its-own/gaudit/db"
-	in "github.com/its-own/gaudit/pkg"
+	in "github.com/its-own/gaudit/in"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

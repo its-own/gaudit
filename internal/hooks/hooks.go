@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/its-own/gaudit/db/mongo"
+	in "github.com/its-own/gaudit/in"
 	"github.com/its-own/gaudit/internal/audit_log"
 	"github.com/its-own/gaudit/internal/entities"
-	in "github.com/its-own/gaudit/pkg"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log/slog"
@@ -212,36 +212,47 @@ func structToMap(obj interface{}) (map[string]interface{}, error) {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Type().Field(i)
 		value := v.Field(i)
-
-		// Get the JSON and BSON tags
-		jsonTag := field.Tag.Get("json")
-		bsonTag := field.Tag.Get("bson")
-
-		// Check if the field should be omitted
-		if strings.Contains(bsonTag, "omitempty") {
-			if isOmitEmpty(value) {
-				continue // Skip adding this field if it's empty and has "omitempty"
-			}
-		}
-
-		// Use JSON tag as the key if present; otherwise, fallback to BSON tag
-		if bsonTag != "" {
-			splitTag := strings.Split(bsonTag, ",")
-			if splitTag[0] == "_id" {
-				objectID := value.Interface().(primitive.ObjectID)
-				result[splitTag[0]] = objectID.Hex()
-				continue
-			}
-			result[splitTag[0]] = value.Interface()
-		} else if jsonTag != "" {
-			splitTag := strings.Split(jsonTag, ",")
-			result[splitTag[0]] = value.Interface()
-		} else {
-			result[convertToSnakeCase(field.Name)] = value.Interface()
-		}
+		convertFieldToMapEntry(field, value, result)
 	}
 
 	return result, nil
+}
+
+// converts a single struct field to a map entry.
+// It handles ObjectID conversion and respects bson/json tags.
+func convertFieldToMapEntry(field reflect.StructField, value reflect.Value, result map[string]interface{}) {
+	bsonTag := field.Tag.Get("bson")
+	jsonTag := field.Tag.Get("json")
+	// Check if the field should be omitted
+	if strings.Contains(bsonTag, "omitempty") {
+		if isOmitEmpty(value) {
+			return // Skip adding this field if it's empty and has "omitempty"
+		}
+	}
+
+	// Check if the field's value is a MongoDB ObjectID
+	if value.Type() == reflect.TypeOf(primitive.ObjectID{}) {
+		objectID := value.Interface().(primitive.ObjectID)
+
+		// Prioritize bson tag, then json tag, and lastly field name (converted to snake_case)
+		if bsonTag != "" {
+			result[strings.Split(bsonTag, ",")[0]] = objectID.Hex()
+		} else if jsonTag != "" {
+			result[strings.Split(jsonTag, ",")[0]] = objectID.Hex()
+		} else {
+			result[convertToSnakeCase(field.Name)] = objectID.Hex()
+		}
+		return
+	}
+
+	// For non-ObjectID fields, prioritize bson, json, or fallback to snake_case field name
+	if bsonTag != "" {
+		result[strings.Split(bsonTag, ",")[0]] = value.Interface()
+	} else if jsonTag != "" {
+		result[strings.Split(jsonTag, ",")[0]] = value.Interface()
+	} else {
+		result[convertToSnakeCase(field.Name)] = value.Interface()
+	}
 }
 
 // isOmitEmpty checks if a value is considered "empty" according to the omitempty rule
