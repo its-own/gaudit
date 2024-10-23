@@ -73,7 +73,7 @@ func WatchAndRegister(ctx context.Context, dir string) error {
 						if structType, ok := typeSpec.Type.(*ast.StructType); ok {
 							if isInjectable(structType) {
 								structName := typeSpec.Name.Name
-								logger.Info("Found injectable struct", "structName", structName, "packagePath", pkg.PkgPath)
+								logger.Info("Found injectable struct", "structName: ", structName, "packagePath", pkg.ID)
 
 								// Lookup the full type from the package scope
 								typeObject := pkg.Types.Scope().Lookup(structName)
