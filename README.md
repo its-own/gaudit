@@ -35,11 +35,31 @@ package main
 import (
     "context"
     _ "github.com/its-own/gaudit"
+    "github.com/its-own/gaudit/db"
+    "github.com/its-own/gaudit/in"
+    "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type User struct {
+    in.Inject
+    ID   primitive.ObjectID `bson:"_id" json:"id"`
+    Name string             `bson:"name" json:"name"`
+}
+
 func main() {
-    // write your own code
-	
+	// connect to MongoDb 
+    client, err = mongo.Connect(ctx, options.Client().ApplyURI(config.MongoUrl).SetRetryWrites(false))
+    if err != nil {
+        panic(fmt.Sprintf("Failed to create client: %v", err))
+    }
+    // initialize go audit
+    mongo := audit.InitMongo(client, config.MongoDbName, gaudit.New())
+    // perform db operation using this client
+    performDbOperation(context.Background(), mongo, "test_collection", &User{ID: "123", Name: "John Doe"})
+}
+// receive interface instead implementation for dependency injection
+func performDbOperation(ctx context.Context, c db.NoSql, collection string, obj *User) {
+    c.connection.Insert(ctx, collection, obj)
 }
 ```
 
@@ -47,6 +67,7 @@ func main() {
 
 Customize Gaudit to fit your needs. You can configure logging settings, output formats, and more in the `config.go` file.
 
+##  coming soon
 ```go
 // Example of setting configuration
 gaudit.SetConfig(gaudit.Config{
