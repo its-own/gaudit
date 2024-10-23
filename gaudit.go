@@ -1,6 +1,7 @@
 package gaudit
 
 import (
+	"github.com/its-own/gaudit/db"
 	"github.com/its-own/gaudit/in"
 	_ "github.com/its-own/gaudit/internal/audit_log"
 	"github.com/its-own/gaudit/internal/hooks"
@@ -20,6 +21,6 @@ type Config struct {
 	Logger   *slog.Logger
 }
 
-func Init(c *Config) *amgo.Mongo {
+func Init(c *Config) db.NoSql {
 	return amgo.InitMongo(c.Client, c.Database, hooks.NewDefaultHook(c.Logger))
 }
