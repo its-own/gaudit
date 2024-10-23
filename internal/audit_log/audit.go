@@ -1,6 +1,8 @@
 package audit
 
-import "context"
+import (
+	"context"
+)
 
 // LogModels Registry for audit-log-enabled models
 var LogModels = make(map[string]bool)

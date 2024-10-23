@@ -3,10 +3,10 @@ package hooks
 import (
 	"context"
 	"fmt"
-	"github.com/its-own/gaudit/db/mongo"
 	in "github.com/its-own/gaudit/in"
 	"github.com/its-own/gaudit/internal/audit_log"
 	"github.com/its-own/gaudit/internal/entities"
+	"github.com/its-own/gaudit/internal/infracture/db/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log/slog"
@@ -20,8 +20,8 @@ type DefaultHooks struct {
 	l *slog.Logger
 }
 
-func NewDefaultHook() *DefaultHooks {
-	return &DefaultHooks{l: slog.Default()}
+func NewDefaultHook(l *slog.Logger) *DefaultHooks {
+	return &DefaultHooks{l: l}
 }
 
 func (h *DefaultHooks) PreSave(ctx context.Context, model interface{}, filter interface{}, col, ops, docId string) {
@@ -66,7 +66,7 @@ func (h *DefaultHooks) handleInsertOperation(ctx context.Context, model interfac
 
 	_, err = db.Database.Collection("audit_logs_meta").InsertOne(ctx, auditLogMeta)
 	if err != nil {
-		db.Logger.Error(err.Error())
+		h.l.Error(err.Error())
 	}
 }
 

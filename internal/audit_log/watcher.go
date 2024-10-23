@@ -63,6 +63,10 @@ func WatchAndRegister(ctx context.Context, dir string) error {
 
 	// Iterate over loaded packages
 	for _, pkg := range _packages {
+		if pkg.Errors != nil {
+			logger.Error("package errors", pkg.Errors)
+			continue
+		}
 		// Iterate over syntax trees of the package
 		for _, file := range pkg.Syntax {
 			// Inspect the AST for declarations

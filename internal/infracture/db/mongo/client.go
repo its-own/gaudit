@@ -11,24 +11,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"log/slog"
 )
 
 // Mongo holds necessary fields and mongo Database session to connect
 type Mongo struct {
 	*mongo.Client
 	Database *mongo.Database
-	Logger   *slog.Logger
 	hook     in.Hook
 }
 
 var instance *Mongo
 
-func InitMongo(cl *mongo.Client, dbName string, hook in.Hook) *Mongo {
+func InitMongo(cl *mongo.Client, database *mongo.Database, hook in.Hook) *Mongo {
 	instance = &Mongo{
 		Client:   cl,
-		Database: cl.Database(dbName),
-		Logger:   slog.Default(),
+		Database: database,
 		hook:     hook,
 	}
 	return instance
