@@ -25,13 +25,8 @@ func WatchAndInjectHooks(ctx context.Context) error {
 	if err != nil {
 		log.Fatalf("Error collecting Go directories: %v", err)
 	}
-	moduleName, err := getGoModuleName(rootDir)
-	if err != nil {
-		log.Fatalf("Error getting Go module name: %v", err)
-	}
 	for _, dir := range goDirs {
-		path := filepath.Join(moduleName, dir)
-		err = WatchAndRegister(ctx, path)
+		err = WatchAndRegister(ctx, dir)
 		if err != nil {
 			log.Println(err)
 		}
