@@ -22,7 +22,7 @@ type Mongo struct {
 
 var instance *Mongo
 
-func InitMongo(cl *mongo.Client, database *mongo.Database, hook in.Hook) *Mongo {
+func InitMongo(cl *mongo.Client, database *mongo.Database, hook in.Hook) db.NoSql {
 	instance = &Mongo{
 		Client:   cl,
 		Database: database,
