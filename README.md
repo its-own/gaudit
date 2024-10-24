@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://i.postimg.cc/cC6mSGyT/Screenshot-2024-10-24-at-11-36-29-AM.png" height="70%" width="70%" alt="logo">
+    <img src="gaudit.png" height="70%" width="70%" alt="logo">
 </p>
 
 ## 🏆 Gaudit 
